@@ -20,6 +20,13 @@ namespace Contacts.Models
         {
             string userId = User.Identity.GetUserId();
 
+
+            if (userId == null)
+            {
+                return new HttpUnauthorizedResult();
+            }
+
+
             ApplicationUser user = db.Users.Find(userId);
 
             var myusers = user.Contacts;
@@ -39,6 +46,7 @@ namespace Contacts.Models
             {
                 return HttpNotFound();
             }
+
             string userId = User.Identity.GetUserId();
             if (!contact.ApplicationUser.UserName.Equals(userId))
             {
@@ -50,6 +58,13 @@ namespace Contacts.Models
         // GET: Contacts/Create
         public ActionResult Create()
         {
+            string userId = User.Identity.GetUserId();
+
+            if (userId == null)
+            {
+                return new HttpUnauthorizedResult();
+            }
+
             return View();
         }
 
@@ -117,6 +132,14 @@ namespace Contacts.Models
         // GET: Contacts/Delete/5
         public ActionResult Delete(int? id)
         {
+            string userId = User.Identity.GetUserId();
+
+
+            if (userId == null)
+            {
+                return new HttpUnauthorizedResult();
+            }
+
             if (id == null)
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
@@ -134,6 +157,14 @@ namespace Contacts.Models
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
+            string userId = User.Identity.GetUserId();
+
+
+            if (userId == null)
+            {
+                return new HttpUnauthorizedResult();
+            }
+
             Contact contact = db.Contacts.Find(id);
             db.Contacts.Remove(contact);
             db.SaveChanges();
