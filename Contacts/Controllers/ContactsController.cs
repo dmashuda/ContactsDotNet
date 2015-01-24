@@ -16,7 +16,7 @@ namespace Contacts.Models
         private ApplicationDbContext db = new ApplicationDbContext();
 
         // GET: Contacts
-        public ActionResult Index()
+        public ActionResult Index(string sortOrder)
         {
             string userId = User.Identity.GetUserId();
 
@@ -29,9 +29,27 @@ namespace Contacts.Models
 
             ApplicationUser user = db.Users.Find(userId);
 
-            var myusers = user.Contacts;
+            var contacts = user.Contacts.OrderBy(s=> s.ContactId);
 
-            return View(myusers.ToList());
+            switch (sortOrder)
+            {
+                case "firstName_asc":
+                    contacts = contacts.OrderBy(s => s.FirstName);
+                    break;
+                case "lastName_asc":
+                    contacts = contacts.OrderBy(s => s.LastName);
+                    break;
+                case "firstName_dsc":
+                    contacts = contacts.OrderByDescending(s => s.FirstName);
+                    break;
+                case "lastName_dsc":
+                    contacts = contacts.OrderByDescending(s => s.LastName);
+                    break;
+            }
+
+            
+
+            return View(contacts.ToList());
         }
 
         // GET: Contacts/Details/5
