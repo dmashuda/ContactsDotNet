@@ -71,12 +71,13 @@ namespace Contacts.Models
             {
                 return HttpNotFound();
             }
-
+            
             string userId = User.Identity.GetUserId();
-            if (!contact.ApplicationUser.UserName.Equals(userId))
+            if (!contact.ApplicationUser.Id.Equals(userId))
             {
-                return new HttpUnauthorizedResult();
+                return new HttpStatusCodeResult(HttpStatusCode.Forbidden, "no hacking....");
             }
+             
             return View(contact);
         }
 
@@ -135,6 +136,13 @@ namespace Contacts.Models
             {
                 return HttpNotFound();
             }
+
+            string userId = User.Identity.GetUserId();
+            if (!contact.ApplicationUser.Id.Equals(userId))
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.Forbidden, "no hacking....");
+            }
+
             return View(contact);
         }
 
@@ -145,6 +153,8 @@ namespace Contacts.Models
         [ValidateAntiForgeryToken]
         public ActionResult Edit([Bind(Include = "ContactId,FirstName,MiddleName,LastName,PhoneNumber,Email")] Contact contact)
         {
+
+
             if (ModelState.IsValid)
             {
                 db.Entry(contact).State = EntityState.Modified;
@@ -170,10 +180,18 @@ namespace Contacts.Models
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
             Contact contact = db.Contacts.Find(id);
+
+
             if (contact == null)
             {
                 return HttpNotFound();
             }
+
+            if (!contact.ApplicationUser.Id.Equals(userId))
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.Forbidden, "no hacking....");
+            }
+
             return View(contact);
         }
 
@@ -191,6 +209,10 @@ namespace Contacts.Models
             }
 
             Contact contact = db.Contacts.Find(id);
+            if (!contact.ApplicationUser.Id.Equals(userId))
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.Forbidden, "no hacking....");
+            }
             db.Contacts.Remove(contact);
             db.SaveChanges();
             return RedirectToAction("Index");
