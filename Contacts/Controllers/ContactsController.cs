@@ -18,6 +18,13 @@ namespace Contacts.Models
         // GET: Contacts
         public ActionResult Index(string sortOrder)
         {
+
+            ViewBag.FirstNameSortParam = String.IsNullOrEmpty(sortOrder) ? "firstName_dsc" : "firstName_asc";
+
+            ViewBag.MiddleNameSortParam = String.IsNullOrEmpty(sortOrder) ? "middleName_dsc" : "middleName_asc";
+
+            ViewBag.LastNameSortParam = String.IsNullOrEmpty(sortOrder) ? "lastName_dsc" : "lastName_asc";
+
             string userId = User.Identity.GetUserId();
 
 
