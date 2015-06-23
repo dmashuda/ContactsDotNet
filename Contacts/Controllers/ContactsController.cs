@@ -8,6 +8,7 @@ using System.Web;
 using System.Web.Mvc;
 using Microsoft.AspNet.Identity;
 using System.Web.Security;
+using PagedList;
 
 namespace Contacts.Models
 {
@@ -16,27 +17,36 @@ namespace Contacts.Models
         private ApplicationDbContext db = new ApplicationDbContext();
 
         // GET: Contacts
-        public ActionResult Index(string sortOrder)
+        public ActionResult Index(string sortOrder, string currentFilter, string searchString, int? page)
         {
 
+            ViewBag.CurrentSort = sortOrder;
+            ViewBag.CurrentFilter = searchString;
             ViewBag.FirstNameSortParam = String.IsNullOrEmpty(sortOrder) ? "firstName_dsc" : "firstName_asc";
-
             ViewBag.MiddleNameSortParam = String.IsNullOrEmpty(sortOrder) ? "middleName_dsc" : "middleName_asc";
-
             ViewBag.LastNameSortParam = String.IsNullOrEmpty(sortOrder) ? "lastName_dsc" : "lastName_asc";
 
             string userId = User.Identity.GetUserId();
-
 
             if (userId == null)
             {
                 return new HttpUnauthorizedResult();
             }
 
+            if (searchString != null)
+                page = 1;
+            else
+                searchString = currentFilter;
 
             ApplicationUser user = db.Users.Find(userId);
 
-            var contacts = user.Contacts.OrderBy(s=> s.ContactId);
+            var contacts = user.Contacts.OrderBy(s => s.ContactId).AsEnumerable();
+
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                contacts = contacts.Where(c => c.LastName.Contains(searchString)
+                                       || c.FirstName.Contains(searchString) || c.MiddleName.Contains(searchString));
+            }
 
             switch (sortOrder)
             {
@@ -46,17 +56,84 @@ namespace Contacts.Models
                 case "lastName_asc":
                     contacts = contacts.OrderBy(s => s.LastName);
                     break;
+                case "middleName_asc":
+                    contacts = contacts.OrderBy(s => s.MiddleName);
+                    break;
                 case "firstName_dsc":
                     contacts = contacts.OrderByDescending(s => s.FirstName);
                     break;
                 case "lastName_dsc":
                     contacts = contacts.OrderByDescending(s => s.LastName);
                     break;
+                case "middleName_dsc":
+                    contacts = contacts.OrderByDescending(s => s.MiddleName);
+                    break;
+                
             }
 
-            
+            int pageSize = 3;
+            int pageNumber = (page ?? 1);
 
-            return View(contacts.ToList());
+            return View(contacts.ToPagedList(pageNumber, pageSize));
+        }
+
+        // GET: Contacts
+        public ActionResult Duplicates(string sortOrder, string currentFilter, string searchString, int? page)
+        {
+
+            ViewBag.CurrentSort = sortOrder;
+            ViewBag.CurrentFilter = searchString;
+            ViewBag.FirstNameSortParam = String.IsNullOrEmpty(sortOrder) ? "firstName_dsc" : "firstName_asc";
+            ViewBag.MiddleNameSortParam = String.IsNullOrEmpty(sortOrder) ? "middleName_dsc" : "middleName_asc";
+            ViewBag.LastNameSortParam = String.IsNullOrEmpty(sortOrder) ? "lastName_dsc" : "lastName_asc";
+
+            string userId = User.Identity.GetUserId();
+
+            if (userId == null)
+            {
+                return new HttpUnauthorizedResult();
+            }
+
+            if (searchString != null)
+                page = 1;
+            else
+                searchString = currentFilter;
+
+            ApplicationUser user = db.Users.Find(userId);
+            var duplicateContacts = user.Contacts.GroupBy(c => new { c.LastName, c.FirstName }).SelectMany(c => c.Skip(1)).Distinct();
+
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                duplicateContacts = duplicateContacts.Where(c => c.LastName.Contains(searchString)
+                                       || c.FirstName.Contains(searchString) || c.MiddleName.Contains(searchString));
+            }
+
+            switch (sortOrder)
+            {
+                case "firstName_asc":
+                    duplicateContacts = duplicateContacts.OrderBy(s => s.FirstName);
+                    break;
+                case "lastName_asc":
+                    duplicateContacts = duplicateContacts.OrderBy(s => s.LastName);
+                    break;
+                case "middleName_asc":
+                    duplicateContacts = duplicateContacts.OrderBy(s => s.MiddleName);
+                    break;
+                case "firstName_dsc":
+                    duplicateContacts = duplicateContacts.OrderByDescending(s => s.FirstName);
+                    break;
+                case "lastName_dsc":
+                    duplicateContacts = duplicateContacts.OrderByDescending(s => s.LastName);
+                    break;
+                case "middleName_dsc":
+                    duplicateContacts = duplicateContacts.OrderByDescending(s => s.MiddleName);
+                    break;
+            }
+
+            int pageSize = 3;
+            int pageNumber = (page ?? 1);
+
+            return View(duplicateContacts.ToPagedList(pageNumber, pageSize));
         }
 
         // GET: Contacts/Details/5
